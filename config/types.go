@@ -11,7 +11,7 @@ const (
 	OUTBoundFeeOut   = "0.00000000000000001"
 	TxTimeout        = 300
 	GASFEERATIO      = "1.5"
-	DUSTBNB          = "0.0001"
+	DUSTBNB          = "0.0002"
 	MINCHECKBLOCKGAP = 6
 )
 
