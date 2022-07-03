@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 
@@ -401,6 +402,14 @@ func (oc *OppyChainInstance) prepareTssPool(creator sdk.AccAddress, pubKey, heig
 	return nil
 }
 
+func (oc *OppyChainInstance) retryPrepareTssPool(blockHeight int64) {
+	oc.keyGenCache = oc.keyGenCache[1:]
+	err := oc.HandleUpdateValidators(blockHeight)
+	if err != nil {
+		fmt.Printf("error in retry prepare tss pool")
+	}
+}
+
 // GetLastBlockHeight gets the current block height
 func (oc *OppyChainInstance) GetLastBlockHeight() (int64, error) {
 	b, err := GetLastBlockHeight(oc.grpcClient)
@@ -431,6 +440,7 @@ func (oc *OppyChainInstance) CheckAndUpdatePool(blockHeight int64) (bool, string
 		gasWanted, err := oc.GasEstimation([]sdk.Msg{el.msg}, el.acc.GetSequence(), nil)
 		if err != nil {
 			oc.logger.Error().Err(err).Msg("Fail to get the gas estimation")
+			oc.retryPrepareTssPool(blockHeight)
 			return false, ""
 		}
 		key, err := oc.Keyring.Key("operator")
