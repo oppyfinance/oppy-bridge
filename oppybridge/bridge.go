@@ -423,7 +423,7 @@ func (oc *OppyChainInstance) CheckAndUpdatePool(blockHeight int64) (bool, string
 	}
 	el := oc.keyGenCache[0]
 	oc.poolUpdateLocker.Unlock()
-	if el.blockHeight >= blockHeight {
+	if el.blockHeight <= blockHeight {
 		oc.logger.Info().Msgf("we are submit the block at height>>>>>>>>%v\n", el.blockHeight)
 		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		defer cancel()
