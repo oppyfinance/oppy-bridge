@@ -588,7 +588,7 @@ func addEventLoop(ctx context.Context, wg *sync.WaitGroup, oppyChain *oppybridge
 				}
 
 				// todo we need also to add the check to avoid send tx near the churn blocks
-				if processableBlockHeight.Int64()-previousTssBlockOutBound >= oppybridge.GroupBlockGap && oppyChain.IsEmpty() {
+				if processableBlockHeight.Int64()-previousTssBlockOutBound >= oppybridge.GroupBlockGap && !oppyChain.IsEmpty() {
 					// if we do not have enough tx to process, we wait for another round
 					if oppyChain.Size() < pubchain.GroupSign && firstTimeOutbound {
 						firstTimeOutbound = false
