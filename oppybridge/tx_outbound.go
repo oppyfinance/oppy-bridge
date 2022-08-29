@@ -30,7 +30,6 @@ func (oc *OppyChainInstance) processTopUpRequest(msg *banktypes.MsgSend, txBlock
 	if !tokenExist || msg.Amount[0].GetDenom() != config.OutBoundDenomFee {
 		return errors.New("token is not on our token list or not fee demon")
 	}
-	tokenAddr := tokenItem.TokenAddr
 
 	dat, ok := oc.pendingTx.LoadAndDelete(memo.TopupID)
 	if !ok {
@@ -64,7 +63,7 @@ func (oc *OppyChainInstance) processTopUpRequest(msg *banktypes.MsgSend, txBlock
 		savedTx.Token.Amount = adjustedTokenAmount
 	}
 
-	itemReq := bcommon.NewOutboundReq(memo.TopupID, savedTx.OutReceiverAddress, currEthAddr, savedTx.Token, tokenAddr, txBlockHeight)
+	itemReq := bcommon.NewOutboundReq(memo.TopupID, savedTx.OutReceiverAddress, currEthAddr, savedTx.Token, savedTx.TokenAddr, txBlockHeight)
 	oc.AddItem(&itemReq)
 	oc.logger.Info().Msgf("Outbound Transaction in Block %v (Current Block %v) to %s with amount %v", txBlockHeight, oc.CurrentHeight, savedTx.OutReceiverAddress, savedTx.Token)
 	return nil
