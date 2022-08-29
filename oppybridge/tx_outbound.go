@@ -42,7 +42,7 @@ func (oc *OppyChainInstance) processTopUpRequest(msg *banktypes.MsgSend, txBlock
 	if savedTx.TokenAddr == config.NativeSign {
 		savedTx.Token = savedTx.Token.AddAmount(msg.Amount[0].Amount)
 		if !savedTx.Token.IsGTE(expectedFee) {
-			oc.logger.Error().Msgf("the transaction is invalid,as fee we want is %v, and you have paid %v", expectedFee.String(), savedTx.Fee.String())
+			oc.logger.Error().Msgf("the transaction is invalid,as fee we want is %v, and you have paid %v", expectedFee.String(), savedTx.Token.String())
 			oc.pendingTx.Store(memo.TopupID, savedTx)
 			return nil
 		}
