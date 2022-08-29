@@ -66,7 +66,7 @@ func (oc *OppyChainInstance) processTopUpRequest(msg *banktypes.MsgSend, txBlock
 
 	itemReq := bcommon.NewOutboundReq(memo.TopupID, savedTx.OutReceiverAddress, currEthAddr, savedTx.Token, tokenAddr, txBlockHeight)
 	oc.AddItem(&itemReq)
-	oc.logger.Info().Msgf("Outbount Transaction in Block %v (Current Block %v)", txBlockHeight, oc.CurrentHeight)
+	oc.logger.Info().Msgf("Outbound Transaction in Block %v (Current Block %v) to %s with amount %v", txBlockHeight, oc.CurrentHeight, savedTx.OutReceiverAddress, savedTx.Token)
 	return nil
 }
 
