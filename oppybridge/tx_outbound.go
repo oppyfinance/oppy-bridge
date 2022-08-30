@@ -39,13 +39,7 @@ func (oc *OppyChainInstance) processTopUpRequest(msg *banktypes.MsgSend, txBlock
 	expectedFee := savedTx.FeeWanted
 
 	if savedTx.TokenAddr == config.NativeSign {
-		savedTx.Token = savedTx.Token.AddAmount(msg.Amount[0].Amount)
-		if !savedTx.Token.IsGTE(expectedFee) {
-			oc.logger.Error().Msgf("the transaction is invalid,as fee we want is %v, and you have paid %v", expectedFee.String(), savedTx.Token.String())
-			oc.pendingTx.Store(memo.TopupID, savedTx)
-			return nil
-		}
-		savedTx.Token = savedTx.Token.SubAmount(expectedFee.Amount)
+		oc.logger.Warn().Msgf("topping up native token is not supported")
 	} else {
 		// now we process the erc20 topup
 		savedTx.Fee = savedTx.Fee.AddAmount(msg.Amount[0].Amount)
@@ -209,8 +203,7 @@ func (oc *OppyChainInstance) processNativeFee(txID, fromAddress string, tokenAdd
 	AmountTransfer := demonAmount.Sub(expectedFee.Amount)
 
 	if AmountTransfer.IsNegative() {
-		oc.logger.Warn().Msgf("The amount to transfer is smaller than the fee")
-		oc.pendingTx.Store(txID, &tx)
+		oc.logger.Warn().Msgf("The amount to transfer is smaller than the fee %v, we drop this tx", expectedFee.String())
 		return nil
 	}
 	tx.Token = tx.Token.SubAmount(expectedFee.Amount)
