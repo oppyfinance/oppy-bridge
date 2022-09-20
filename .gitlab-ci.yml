@@ -5,6 +5,7 @@ cache:
 before_script:
   - mkdir -p .cache
   - export GOPATH="$CI_PROJECT_DIR/.cache"
+  - PATH="$GOPATH/bin:$PATH"
   - go get -v -d ./...
 
 stages:
@@ -15,18 +16,29 @@ stages:
 
 unit_tests:
   stage: test
+  image: golang:1.18
   coverage: '/total:\s+\(statements\)\s+(\d+.\d+\%)/'
   script:
-    - go test   -v -coverprofile=coverage.out -timeout 15m ./...
+    - go install gotest.tools/gotestsum@latest
+    - gotestsum  --junitfile report.xml --format testname  -- -coverprofile=cover.out ./...
     - go tool cover -func=coverage.out
 
-lint_code:
-  image: golangci/golangci-lint
-  stage: test
-  before_script:
-    - go get mvdan.cc/gofumpt
-  script:
-    - golangci-lint run -v --timeout 60s
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+    expire_in: 1 week
+
+
+
+
+#lint_code:
+#  image: golangci/golangci-lint
+#  stage: test
+#  before_script:
+#    - go get mvdan.cc/gofumpt
+#  script:
+#    - golangci-lint run -v --timeout 60s
 
 #build-docker:
 #  stage: build
