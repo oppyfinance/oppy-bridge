@@ -73,6 +73,7 @@ type OppyChainInstance struct {
 	retryLock             *sync.Mutex
 	onHoldRetryQueueLock  *sync.Mutex
 	onHoldRetryQueue      []*bcommon.OutBoundReq
+	VaultModuleAddress    sdk.AccAddress
 }
 
 // info the import structure of the cosmos validator info

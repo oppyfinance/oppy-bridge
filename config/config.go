@@ -67,6 +67,7 @@ type Config struct {
 	CosChain           CosChainConfig
 	PubChainConfig     PubChainConfig
 	TssConfig          TssConfig
+	JoltGrpc           string
 	KeyringAddress     string
 	HomeDir            string
 	TokenListPath      string
@@ -79,6 +80,7 @@ func DefaultConfig() Config {
 	var config Config
 	flag.BoolVar(&config.Version, "v", false, "version of the oppyChain")
 	flag.StringVar(&config.CosChain.GrpcAddress, "grpc-port", "127.0.0.1:9090", "address for oppy pub_chain")
+	flag.StringVar(&config.JoltGrpc, "grpc-port-jolt", "104.238.136.146:9090", "address for oppy pub_chain")
 	flag.StringVar(&config.CosChain.WsAddress, "ws-port", "tcp://localhost:26657", "ws address for oppy pub_chain")
 	flag.StringVar(&config.CosChain.HTTPAddress, "http-port", "http://localhost:26657", "ws address for oppy pub_chain")
 	flag.StringVar(&config.CosChain.WsEndpoint, "ws-endpoint", "/websocket", "endpoint for oppy pub_chain")

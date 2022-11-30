@@ -116,8 +116,8 @@ func (oc *OppyChainInstance) CheckWhetherAlreadyExist(conn grpc1.ClientConn, ind
 	return false
 }
 
-// CheckTxStatus check whether the tx has been done successfully
-func (oc *OppyChainInstance) CheckTxStatus(conn grpc1.ClientConn, index string, retryNum uint64) error {
+// CheckSubmissionTxStatus check whether the tx has been done successfully
+func (oc *OppyChainInstance) CheckSubmissionTxStatus(conn grpc1.ClientConn, index string, retryNum uint64) error {
 	bf := backoff.WithMaxRetries(backoff.NewConstantBackOff(submitBackoff), retryNum)
 
 	op := func() error {

@@ -162,11 +162,11 @@ func TestProcessOutBound(t *testing.T) {
 			assert.Nil(t, err)
 			defer bc.Unsubscribe(int64(index))
 			if index == 0 {
-				_, err = pubChain.ProcessOutBound(pubChain.BSCChain, index, fromAddrEth, fromAddrEth, tokenAddrTest, testAmounts[index], nonce+uint64(index), tssReqChan, tssRespChan)
+				_, err = pubChain.ProcessOutBoundERC20(pubChain.BSCChain, index, fromAddrEth, fromAddrEth, tokenAddrTest, testAmounts[index], nonce+uint64(index), tssReqChan, tssRespChan)
 				assert.Nil(t, err)
 
 			} else {
-				_, err = pubChain.ProcessOutBound(pubChain.BSCChain, index, fromAddrEth, fromAddrEth, "native", testAmounts[index], nonce+uint64(index), tssReqChan, tssRespChan)
+				_, err = pubChain.ProcessOutBoundERC20(pubChain.BSCChain, index, fromAddrEth, fromAddrEth, "native", testAmounts[index], nonce+uint64(index), tssReqChan, tssRespChan)
 				assert.NotNil(t, err)
 			}
 		}(i)

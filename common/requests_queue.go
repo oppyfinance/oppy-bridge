@@ -19,7 +19,7 @@ func (o *OutBoundReq) Hash() common.Hash {
 	return hash
 }
 
-func NewOutboundReq(txID string, address, fromPoolAddr common.Address, coin types.Coin, coinAddr string, txBlockHeight int64, feeCoins, feeToValidator types.Coins, chainType string) OutBoundReq {
+func NewOutboundReq(txID string, address, fromPoolAddr common.Address, coin types.Coin, coinAddr string, txBlockHeight int64, feeCoins, feeToValidator types.Coins, chainType, ibcReceiver string) OutBoundReq {
 	return OutBoundReq{
 		txID,
 		address,
@@ -32,6 +32,9 @@ func NewOutboundReq(txID string, address, fromPoolAddr common.Address, coin type
 		feeCoins,
 		feeToValidator,
 		chainType,
+		0,
+		0,
+		ibcReceiver,
 	}
 }
 
@@ -73,7 +76,7 @@ func (i *InBoundReq) Index() string {
 	return indexStr
 }
 
-func NewAccountInboundReq(address types.AccAddress, toPoolAddr common.Address, coin types.Coin, txid []byte, blockHeight int64) InBoundReq {
+func NewAccountInboundReq(address types.AccAddress, toPoolAddr common.Address, coin types.Coin, txid []byte, blockHeight int64, chainType, ibcReceiver string) InBoundReq {
 	return InBoundReq{
 		address,
 		txid,
@@ -84,12 +87,14 @@ func NewAccountInboundReq(address types.AccAddress, toPoolAddr common.Address, c
 		0,
 		nil,
 		"",
+		chainType,
+		ibcReceiver,
 	}
 }
 
 // GetInboundReqInfo returns the info of the inbound transaction
-func (i *InBoundReq) GetInboundReqInfo() (types.AccAddress, common.Address, types.Coin, int64) {
-	return i.Address, i.ToPoolAddr, i.Coin, i.BlockHeight
+func (i *InBoundReq) GetInboundReqInfo() (types.AccAddress, common.Address, types.Coin, int64, string, string) {
+	return i.Address, i.ToPoolAddr, i.Coin, i.BlockHeight, i.ChainType, i.ibcReceiver
 }
 
 // SetAccountInfo sets the block height of the tx

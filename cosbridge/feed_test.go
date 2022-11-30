@@ -113,7 +113,7 @@ func createdTestInBoundReqs(n int) []*common.InBoundReq {
 			panic(err)
 		}
 		addr := crypto.PubkeyToAddress(sk.PublicKey)
-		item := common.NewAccountInboundReq(accs[i].Address, addr, testCoin, []byte(txid), int64(i))
+		item := common.NewAccountInboundReq(accs[i].Address, addr, testCoin, []byte(txid), int64(i), "BSC")
 		retReq[i] = &item
 	}
 	return retReq
@@ -146,7 +146,7 @@ func (f FeedtransactionTestSuite) TestFeedTransactions() {
 		},
 	}
 
-	acc, err := queryAccount(f.grpc, f.network.Validators[0].Address.String(), "")
+	acc, err := QueryAccount(f.grpc, f.network.Validators[0].Address.String(), "")
 	f.Require().NoError(err)
 	_ = acc
 	pi := pubchain.Instance{

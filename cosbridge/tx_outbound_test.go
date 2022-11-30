@@ -272,22 +272,22 @@ func (o OutBoundTestSuite) TestProcessMsg() {
 		ChainType: "BSC",
 	}
 
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("msg1"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("msg1"))
 	o.Require().EqualError(err, "empty address string is not allowed")
 
 	msg.FromAddress = o.network.Validators[0].Address.String()
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("msg1"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("msg1"))
 	o.Require().EqualError(err, "empty address string is not allowed")
 
 	ret := oc.CheckWhetherAlreadyExist(o.grpc, "testindex")
 	o.Require().True(ret)
 
 	msg.ToAddress = accs[3].oppyAddr.String()
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("msg1"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("msg1"))
 	o.Require().EqualError(err, "not a top up message to the pool")
 
 	msg.ToAddress = accs[1].oppyAddr.String()
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("msg1"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("msg1"))
 	o.Require().EqualError(err, "incorrect msg format")
 
 	fee := sdk.NewCoin(config.OutBoundDenomFeeBSC, sdk.NewInt(100))
@@ -296,11 +296,11 @@ func (o OutBoundTestSuite) TestProcessMsg() {
 	topUptoken := sdk.NewCoin("testToken", sdk.NewInt(100))
 
 	msg.Amount = sdk.Coins{fee, coin2, coin3}
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("msg1"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("msg1"))
 	o.Require().EqualError(err, "incorrect msg format")
 
 	msg.Amount = sdk.Coins{fee, coin2}
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("msg1"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("msg1"))
 	o.Require().EqualError(err, "fail to process the outbound erc20 request invalid fee pair")
 
 	// test ERC20 token
@@ -308,13 +308,13 @@ func (o OutBoundTestSuite) TestProcessMsg() {
 	txIDByte, err := hex.DecodeString(txID)
 	o.Require().NoError(err)
 	msg.Amount = sdk.Coins{fee, topUptoken}
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, txIDByte)
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, txIDByte)
 	o.Require().NoError(err)
 
 	// in reality, we will not have two tx with same txID
 	msg.Amount = sdk.Coins{fee}
 	memo.TopupID = txID
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("any"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("any"))
 	o.Require().NoError(err)
 
 	dat, ok := oc.pendingTx.Load(txID)
@@ -328,7 +328,7 @@ func (o OutBoundTestSuite) TestProcessMsg() {
 	delta := expectedFee.SubAmount(FeeWeGet)
 	memo.TopupID = txID
 	msg.Amount = []sdk.Coin{delta}
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, []byte("any"))
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, []byte("any"))
 	o.Require().NoError(err)
 	_, ok = oc.pendingTx.Load(txID)
 	o.Require().False(ok)
@@ -346,7 +346,7 @@ func (o OutBoundTestSuite) TestProcessMsg() {
 	o.Require().NoError(err)
 	msg.Amount = sdk.Coins{fee}
 	memo.TopupID = ""
-	err = oc.processMsg(baseBlockHeight, []sdk.AccAddress{accs[1].oppyAddr, accs[2].oppyAddr}, accs[3].commAddr, memo, &msg, txIDByte)
+	err = oc.processMsg(baseBlockHeight, accs[3].commAddr, memo, &msg, txIDByte)
 	o.Require().NoError(err)
 
 	_, ok = oc.pendingTx.Load(txID)

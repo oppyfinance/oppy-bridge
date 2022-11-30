@@ -142,7 +142,7 @@ func (b BridgeTestSuite) TestBridgeTx() {
 		PoolPubKey:  accs[1].pk,
 		BlockHeight: "5",
 	}
-	acc, err := queryAccount(b.grpc, b.network.Validators[0].Address.String(), "")
+	acc, err := QueryAccount(b.grpc, b.network.Validators[0].Address.String(), "")
 	b.Require().NoError(err)
 
 	num, seq := acc.GetAccountNumber(), acc.GetSequence()
@@ -262,7 +262,7 @@ func (b BridgeTestSuite) TestCheckOutBoundTx() {
 
 	send := banktypes.NewMsgSend(valAddr, accs[0].oppyAddr, sdk.Coins{sdk.NewCoin("stake", sdk.NewInt(1))})
 
-	acc, err := queryAccount(b.grpc, valAddr.String(), "")
+	acc, err := QueryAccount(b.grpc, valAddr.String(), "")
 	b.Require().NoError(err)
 
 	memo := common.BridgeMemo{

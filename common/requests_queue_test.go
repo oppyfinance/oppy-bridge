@@ -42,7 +42,7 @@ func createdTestInBoundReqs(n int) []*InBoundReq {
 			panic(err)
 		}
 		addr := crypto.PubkeyToAddress(sk.PublicKey)
-		item := NewAccountInboundReq(accs[i].Address, addr, testCoin, []byte(txid), int64(i))
+		item := NewAccountInboundReq(accs[i].Address, addr, testCoin, []byte(txid), int64(i), "ETH")
 		retReq[i] = &item
 	}
 	return retReq
@@ -68,6 +68,6 @@ func TestInBoundTx(t *testing.T) {
 	seq, num, _, _ := outboundreqs[0].GetAccountInfo()
 	assert.Equal(t, seq, uint64(100))
 	assert.Equal(t, num, uint64(2))
-	_, _, coin, _ := outboundreqs[0].GetInboundReqInfo()
+	_, _, coin, _, _ := outboundreqs[0].GetInboundReqInfo()
 	assert.Equal(t, coin.Amount.String(), "32")
 }

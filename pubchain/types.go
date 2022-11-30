@@ -51,7 +51,7 @@ type InboundTx struct {
 }
 
 type Erc20TxInfo struct {
-	fromAddr     sdk.AccAddress // address that we should send token to
+	dstAddr      string         // address that we should send token to
 	toAddr       common.Address // address to the pool
 	Amount       *big.Int       // the amount of the token that cross the bridge
 	tokenAddress common.Address // the erc20 contract address (we need to ensure the token address is 100% correct)
@@ -132,6 +132,7 @@ type Instance struct {
 	ChannelQueue         chan *BlockHead
 	onHoldRetryQueue     []*bcommon.InBoundReq
 	onHoldRetryQueueLock *sync.Mutex
+	FeedIBC              bool
 }
 
 // NewChainInstance initialize the oppy_bridge entity
@@ -142,15 +143,15 @@ func NewChainInstance(wsBSC, wsETH string, tssServer tssclient.TssInstance, tl t
 
 	bscChainClient, err := NewChainInfo(wsBSC, "BSC", wg)
 	if err != nil {
-		logger.Error().Err(err).Msg("fail to create the eth chain client")
-		return nil, errors.New("invalid eth client")
+		logger.Error().Err(err).Msgf("fail to create the eth chain client with addr %v", wsBSC)
+		return nil, errors.New("invalid BSC client")
 	}
 	bscChainClient.ChannelQueue = channelQueue
 	bscChainClient.contractAddress = OppyContractAddressBSC
 
 	ethChainClient, err := NewChainInfo(wsETH, "ETH", wg)
 	if err != nil {
-		logger.Error().Err(err).Msg("fail to create the eth chain client")
+		logger.Error().Err(err).Msgf("fail to create the eth chain client with address %v", wsETH)
 		return nil, errors.New("invalid eth client")
 	}
 	ethChainClient.ChannelQueue = channelQueue
@@ -177,5 +178,6 @@ func NewChainInstance(wsBSC, wsETH string, tssServer tssclient.TssInstance, tl t
 		wg:                   wg,
 		onHoldRetryQueue:     []*bcommon.InBoundReq{},
 		onHoldRetryQueueLock: &sync.Mutex{},
+		FeedIBC:              false,
 	}, nil
 }

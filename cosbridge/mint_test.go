@@ -220,7 +220,7 @@ func (m MintTestSuite) TestProcessInbound() {
 	valAddr, err := misc.PoolPubKeyToOppyAddress(pkstr)
 	m.Require().NoError(err)
 
-	acc, err := queryAccount(m.grpc, valAddr.String(), m.network.Validators[0].RPCAddress)
+	acc, err := QueryAccount(m.grpc, valAddr.String(), m.network.Validators[0].RPCAddress)
 	m.Require().NoError(err)
 	tx := common.NewAccountInboundReq(valAddr, accs[0].commAddr, sdk.NewCoin("test", sdk.NewInt(1)), []byte("test"), int64(100))
 

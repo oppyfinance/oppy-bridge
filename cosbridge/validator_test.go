@@ -185,8 +185,8 @@ func (v ValidatorTestSuite) TestOppyChainBridge_CheckWhetherAlreadyExist() {
 func (v ValidatorTestSuite) TestCheckTxStatus() {
 	oc := new(OppyChainInstance)
 	oc.GrpcClient = v.network.Validators[0].ClientCtx
-	err := oc.CheckTxStatus(oc.GrpcClient, "testindex", 1)
+	err := oc.CheckSubmissionTxStatus(oc.GrpcClient, "testindex", 1)
 	v.Require().NoError(err)
-	err = oc.CheckTxStatus(oc.GrpcClient, "testindexnoexist", 1)
+	err = oc.CheckSubmissionTxStatus(oc.GrpcClient, "testindexnoexist", 1)
 	v.Require().Error(err)
 }

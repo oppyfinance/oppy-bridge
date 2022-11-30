@@ -1,6 +1,8 @@
 package bridge
 
 import (
+	bcommon "gitlab.com/oppy-finance/oppy-bridge/common"
+	vaulttypes "gitlab.com/oppy-finance/oppychain/x/vault/types"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -87,7 +89,7 @@ func pubchainProcess(pi *pubchain.Instance, oppyChain *cosbridge.OppyChainInstan
 	if latestHeight.NumberU64() < *outboundPauseHeight {
 		zlog.Logger.Warn().Msgf("to many errors for outbound we wait for %v blocks to continue", *outboundPauseHeight-latestHeight.NumberU64())
 		if latestHeight.NumberU64() == *outboundPauseHeight-1 {
-			zlog.Info().Msgf("we now load the onhold tx")
+			zlog.Info().Msgf("we now load the onhold outbound tx")
 			putOnHoldBlockOutBoundBack(oppyGrpc, chainInfo, oppyChain)
 		}
 		return
@@ -122,18 +124,27 @@ func pubchainProcess(pi *pubchain.Instance, oppyChain *cosbridge.OppyChainInstan
 		}
 
 		zlog.Logger.Warn().Msgf("we feed the outbound tx now %v", pools[1].PoolInfo.CreatePool.String())
+		var outboundItems []*bcommon.OutBoundReq
+		if !pi.FeedIBC {
+			pi.FeedIBC = true
+			outboundItems = oppyChain.PopItem(pubchain.GroupSign, blockHead.ChainType, 0)
+			if outboundItems == nil {
+				zlog.Logger.Info().Msgf("empty queue for general outbound")
+				return
+			}
 
-		outboundItems := oppyChain.PopItem(pubchain.GroupSign, blockHead.ChainType)
-
-		if outboundItems == nil {
-			zlog.Logger.Info().Msgf("empty queue")
-			return
-		}
-
-		err = pi.FeedTx(pools[1].PoolInfo, outboundItems, blockHead.ChainType)
-		if err != nil {
-			zlog.Logger.Error().Err(err).Msgf("fail to feed the tx")
-			return
+			err = pi.FeedTx(pools[1].PoolInfo, outboundItems, blockHead.ChainType)
+			if err != nil {
+				zlog.Logger.Error().Err(err).Msgf("fail to feed the tx")
+				return
+			}
+		} else {
+			pi.FeedIBC = false
+			outboundItems, err = feedIBC(oppyChain, pools[1].PoolInfo, latestHeight.NumberU64())
+			if err != nil {
+				zlog.Logger.Error().Err(err).Msgf("fail to feed the outbound ibc tx")
+				return
+			}
 		}
 		*previousTssBlockOutBound = processableBlockHeight.Int64()
 		*firstTimeOutbound = true
@@ -141,4 +152,20 @@ func pubchainProcess(pi *pubchain.Instance, oppyChain *cosbridge.OppyChainInstan
 		oppyChain.OutboundReqChan <- outboundItems
 		outBoundProcessDone.Store(false)
 	}
+}
+
+func feedIBC(oppyChain *cosbridge.OppyChainInstance, lastPoolInfo *vaulttypes.PoolInfo, latestHeight uint64) ([]*bcommon.OutBoundReq, error) {
+	poolAddr := lastPoolInfo.CreatePool.PoolAddr.String()
+	acc, err := cosbridge.QueryAccount(oppyChain.GrpcClient, poolAddr, "")
+	if err != nil {
+		zlog.Logger.Info().Msgf("fail to query the oppychain info")
+		return nil, err
+	}
+
+	items, err := oppyChain.FeedIBCTx(int64(latestHeight), acc)
+	if err != nil {
+		zlog.Logger.Error().Err(err).Msgf("fail to feed the tx")
+		return nil, err
+	}
+	return items, nil
 }

@@ -2,6 +2,7 @@ package cosbridge
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"sync"
 
@@ -22,8 +23,8 @@ import (
 	vaulttypes "gitlab.com/oppy-finance/oppychain/x/vault/types"
 )
 
-// queryAccount get the current sender account info
-func queryAccount(grpcClient grpc1.ClientConn, addr, grpcAddr string) (authtypes.AccountI, error) {
+// QueryAccount get the current sender account info
+func QueryAccount(grpcClient grpc1.ClientConn, addr, grpcAddr string) (authtypes.AccountI, error) {
 	var err error
 	if grpcClient == nil {
 		grpcClie2, err := grpc.Dial(grpcAddr, grpc.WithInsecure())
@@ -48,6 +49,52 @@ func queryAccount(grpcClient grpc1.ClientConn, addr, grpcAddr string) (authtypes
 		return nil, err
 	}
 	return acc, nil
+}
+
+// QueryTx get the current sender account info
+func QueryTx(grpcClient grpc1.ClientConn, grpcAddr, txHash string) (*sdk.TxResponse, error) {
+	var err error
+	if grpcClient == nil {
+		grpcClie2, err := grpc.Dial(grpcAddr, grpc.WithInsecure())
+		if err != nil {
+			return nil, err
+		}
+		defer grpcClie2.Close()
+		grpcClient = grpcClie2
+	}
+
+	txS := cosTx.NewServiceClient(grpcClient)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+	defer cancel()
+
+	in := cosTx.GetTxRequest{
+		Hash: txHash,
+	}
+
+	tx, err := txS.GetTx(ctx, &in)
+	if err != nil {
+		return nil, err
+	}
+	return tx.TxResponse, nil
+}
+
+// QueryBlockHeightNoSafe gets the current sender account info
+func QueryBlockHeightNoSafe(grpcAddr string) (int64, error) {
+	var err error
+	grpcClient, err := grpc.Dial(grpcAddr, grpc.WithInsecure())
+	if err != nil {
+		return 0, err
+	}
+	defer grpcClient.Close()
+
+	ts := tmservice.NewServiceClient(grpcClient)
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+	defer cancel()
+	resp, err := ts.GetLatestBlock(ctx, &tmservice.GetLatestBlockRequest{})
+	if err != nil {
+		return 0, err
+	}
+	return resp.Block.Header.Height, nil
 }
 
 // queryBalance get the current sender account info
@@ -121,6 +168,24 @@ func GetLastBlockHeight(grpcClient grpc1.ClientConn) (int64, error) {
 	return resp.Block.Header.Height, nil
 }
 
+func GetVaultModuleAccount(grpcClient grpc1.ClientConn) (string, error) {
+	ts := vaulttypes.NewQueryClient(grpcClient)
+	q := vaulttypes.QueryModuleAccount{}
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+	defer cancel()
+	acc, err := ts.GetModuleAddress(ctx, &q)
+	return acc.GetAddress(), err
+}
+
+func GetTx(txHash []byte, conn grpc1.ClientConn) (*cosTx.GetTxResponse, error) {
+	txClient := cosTx.NewServiceClient(conn)
+	txquery := cosTx.GetTxRequest{Hash: hex.EncodeToString(txHash)}
+	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
+	defer cancel()
+	return txClient.GetTx(ctx, &txquery)
+
+}
+
 // GetBlockByHeight get the block from oppy chain based on provided height
 func GetBlockByHeight(grpcClient grpc1.ClientConn, height int64) (*types.Block, error) {
 	ts := tmservice.NewServiceClient(grpcClient)
@@ -137,13 +202,13 @@ func GetBlockByHeight(grpcClient grpc1.ClientConn, height int64) (*types.Block, 
 	return resp.Block, nil
 }
 
-// CheckTxStatus check whether the tx has been done successfully
+// CheckSubmissionTxStatus check whether the tx has been done successfully
 func (oc *OppyChainInstance) waitAndSend(conn grpc1.ClientConn, poolAddress sdk.AccAddress, targetSeq uint64) error {
 	bf := backoff.WithMaxRetries(backoff.NewConstantBackOff(submitBackoff), 40)
 
 	alreadyPassed := false
 	op := func() error {
-		acc, err := queryAccount(conn, poolAddress.String(), oc.grpcAddr)
+		acc, err := QueryAccount(conn, poolAddress.String(), oc.grpcAddr)
 		if err != nil {
 			oc.logger.Error().Err(err).Msgf("fail to query the account")
 			return errors.New("invalid account query")
@@ -165,7 +230,7 @@ func (oc *OppyChainInstance) waitAndSend(conn grpc1.ClientConn, poolAddress sdk.
 	return err
 }
 
-func (oc *OppyChainInstance) batchComposeAndSend(conn grpc1.ClientConn, sendMsg []sdk.Msg, accSeq, accNum uint64, signMsg *tssclient.TssSignigMsg, poolAddress sdk.AccAddress) (map[uint64]string, error) {
+func (oc *OppyChainInstance) BatchComposeAndSend(conn grpc1.ClientConn, sendMsg []sdk.Msg, accSeq, accNum uint64, signMsg *tssclient.TssSignigMsg, poolAddress sdk.AccAddress) (map[uint64]string, error) {
 	gasWanted, err := oc.GasEstimation(conn, sendMsg, accSeq, nil)
 	if err != nil {
 		oc.logger.Error().Err(err).Msg("Fail to get the gas estimation")

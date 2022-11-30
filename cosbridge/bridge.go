@@ -3,7 +3,6 @@ package cosbridge
 import (
 	"context"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"strconv"
@@ -443,7 +442,7 @@ func (oc *OppyChainInstance) CheckAndUpdatePool(conn grpc1.ClientConn, blockHeig
 		ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
 		defer cancel()
 
-		acc, err := queryAccount(conn, el.creator.String(), oc.grpcAddr)
+		acc, err := QueryAccount(conn, el.creator.String(), oc.grpcAddr)
 		if err != nil {
 			oc.logger.Error().Err(err).Msg("Fail to query the account")
 			return false, ""
@@ -490,7 +489,6 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 	if pools[0] == nil || pools[1] == nil {
 		return
 	}
-	poolAddress := []sdk.AccAddress{pools[0].CosAddress, pools[1].CosAddress}
 	encodingConfig := oc.encoding
 
 	tx, err := encodingConfig.TxConfig.TxDecoder()(rawTx)
@@ -503,8 +501,7 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 	if !ok {
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), grpcTimeout)
-	defer cancel()
+
 	memo := txWithMemo.GetMemo()
 
 	var txMemo bcommon.BridgeMemo
@@ -520,21 +517,18 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 	for _, msg := range txWithMemo.GetMsgs() {
 		switch eachMsg := msg.(type) {
 		case *banktypes.MsgSend:
-			txClient := cosTx.NewServiceClient(conn)
-			txquery := cosTx.GetTxRequest{Hash: hex.EncodeToString(rawTx.Hash())}
-			t, err := txClient.GetTx(ctx, &txquery)
+			t, err := GetTx(rawTx.Hash(), conn)
 			if err != nil {
 				oc.logger.Error().Err(err).Msgf("fail to query the tx")
 				continue
 			}
-
 			if t.TxResponse.Code != 0 {
 				//		this means this tx is not a successful tx
 				zlog.Warn().Msgf("not a valid top up message with error code %v (%v)", t.TxResponse.Code, t.TxResponse.RawLog)
 				continue
 			}
 
-			err = oc.processMsg(txBlockHeight, poolAddress, pools[1].EthAddress, txMemo, eachMsg, rawTx.Hash())
+			err = oc.processMsg(txBlockHeight, pools[1].EthAddress, txMemo, eachMsg, rawTx.Hash())
 			if err != nil {
 				if err.Error() != "not a top up message to the pool" {
 					oc.logger.Error().Err(err).Msgf("fail to process the message, it is not a top up message")

@@ -23,7 +23,7 @@ const alreadyKnown = "already known"
 
 // ProcessInBoundERC20 process the inbound contract token top-up
 func (pi *Instance) ProcessInBoundERC20(tx *ethTypes.Transaction, chainType string, txInfo *Erc20TxInfo, txBlockHeight uint64) error {
-	err := pi.processInboundERC20Tx(tx.Hash().Hex()[2:], chainType, txBlockHeight, txInfo.fromAddr, txInfo.tokenAddress, txInfo.Amount, txInfo.tokenAddress)
+	err := pi.processInboundERC20Tx(tx.Hash().Hex()[2:], chainType, txBlockHeight, txInfo.dstAddr, txInfo.tokenAddress, txInfo.Amount, txInfo.tokenAddress)
 	if err != nil {
 		pi.logger.Error().Err(err).Msg("fail to process the inbound tx")
 		return err
@@ -43,8 +43,8 @@ func (pi *Instance) ProcessNewBlock(chainType string, chainInfo *ChainInfo, numb
 	return nil
 }
 
-func (pi *Instance) processInboundERC20Tx(txID, chainType string, txBlockHeight uint64, from types.AccAddress, to common.Address, value *big.Int, addr common.Address) error {
-	// this is repeated check for tokenAddr which is cheked at function 'processEachBlock'
+func (pi *Instance) processInboundERC20Tx(txID, chainType string, txBlockHeight uint64, dst string, to common.Address, value *big.Int, addr common.Address) error {
+	// this is repeated check for tokenAddr which is checked at function 'processEachBlock'
 	tokenItem, exit := pi.TokenList.GetTokenInfoByAddressAndChainType(strings.ToLower(addr.Hex()), chainType)
 	if !exit {
 		pi.logger.Error().Msgf("Token is not on our token list")
@@ -56,9 +56,27 @@ func (pi *Instance) processInboundERC20Tx(txID, chainType string, txBlockHeight 
 		Amount: types.NewIntFromBigInt(value),
 	}
 
+	var dstAddr types.AccAddress
+	var err error
+	var ibcChainType string
+	if strings.Contains(dst, "jolt") {
+		ibcChainType = "JOLT"
+		dstAddr, err = bcommon.AccAddressFromHex("jolt", dst)
+		if err != nil {
+			pi.logger.Error().Err(err).Msgf("fail to the acc address")
+			return err
+		}
+	} else {
+		dstAddr, err = types.AccAddressFromBech32(dst)
+		if err != nil {
+			pi.logger.Error().Err(err).Msgf("fail to the acc address")
+			return err
+		}
+	}
+
 	tx := InboundTx{
 		txID,
-		from,
+		dstAddr,
 		txBlockHeight,
 		token,
 	}
@@ -75,7 +93,7 @@ func (pi *Instance) processInboundERC20Tx(txID, chainType string, txBlockHeight 
 		tx.Token.Amount = adjustedTokenAmount
 	}
 
-	item := bcommon.NewAccountInboundReq(tx.Address, to, tx.Token, txIDBytes, int64(txBlockHeight))
+	item := bcommon.NewAccountInboundReq(tx.Address, to, tx.Token, txIDBytes, int64(txBlockHeight), ibcChainType, dst)
 	pi.AddItem(&item)
 	return nil
 }
@@ -121,12 +139,8 @@ func (pi *Instance) checkErc20(data []byte, to, contractAddress string) (*Erc20T
 			return nil, err
 		}
 
-		fromAddr, err := types.AccAddressFromBech32(memoInfo.Dest)
-		if err != nil {
-			return nil, err
-		}
 		ret := Erc20TxInfo{
-			fromAddr:     fromAddr,
+			dstAddr:      memoInfo.Dest,
 			toAddr:       toAddr,
 			Amount:       amount,
 			tokenAddress: tokenAddress,
@@ -173,11 +187,20 @@ func (pi *Instance) processEachBlock(chainType string, chainInfo *ChainInfo, blo
 				pi.logger.Error().Err(err).Msgf("fail to unmarshal the memo")
 				continue
 			}
-
-			fromAddr, err := types.AccAddressFromBech32(memoInfo.Dest)
-			if err != nil {
-				pi.logger.Error().Err(err).Msgf("fail to the acc address")
-				continue
+			var fromAddr types.AccAddress
+			if strings.Contains(memoInfo.Dest, "jolt") {
+				memoInfo.ChainType = "JOLT"
+				fromAddr, err = bcommon.AccAddressFromHex("jolt", memoInfo.Dest)
+				if err != nil {
+					pi.logger.Error().Err(err).Msgf("fail to the acc address")
+					continue
+				}
+			} else {
+				fromAddr, err = types.AccAddressFromBech32(memoInfo.Dest)
+				if err != nil {
+					pi.logger.Error().Err(err).Msgf("fail to the acc address")
+					continue
+				}
 			}
 
 			tokenItem, exist := pi.TokenList.GetTokenInfoByAddressAndChainType("native", chainType)
@@ -195,7 +218,7 @@ func (pi *Instance) processEachBlock(chainType string, chainInfo *ChainInfo, blo
 				balance.Amount = adjustedTokenAmount
 			}
 
-			item := bcommon.NewAccountInboundReq(fromAddr, *tx.To(), balance, tx.Hash().Bytes(), txBlockHeight)
+			item := bcommon.NewAccountInboundReq(fromAddr, *tx.To(), balance, tx.Hash().Bytes(), txBlockHeight, memoInfo.ChainType, memoInfo.Dest)
 			// we add to the retry pool to  sort the tx
 			pi.AddItem(&item)
 		}

@@ -22,7 +22,7 @@ import (
 	"gitlab.com/oppy-finance/oppy-bridge/misc"
 )
 
-// CheckTxStatus check whether the tx has been done successfully
+// CheckSubmissionTxStatus check whether the tx has been done successfully
 func (pi *Instance) waitToSend(chainInfo *ChainInfo, poolAddress common.Address, targetNonce uint64) error {
 	bf := backoff.NewExponentialBackOff()
 	bf.MaxElapsedTime = time.Minute * 2
@@ -260,8 +260,8 @@ func (pi *Instance) SendToken(chainInfo *ChainInfo, signerPk string, sender, rec
 	return readyTx.Hash(), err
 }
 
-// ProcessOutBound send the money to public chain
-func (pi *Instance) ProcessOutBound(chainInfo *ChainInfo, index int, toAddr, fromAddr common.Address, tokenAddr string, amount *big.Int, nonce uint64, tssReqChan chan *TssReq, tssRespChan chan map[string][]byte) (string, error) {
+// ProcessOutBoundERC20 send the money to public chain
+func (pi *Instance) ProcessOutBoundERC20(chainInfo *ChainInfo, chainType string, index int, toAddr, fromAddr common.Address, tokenAddr string, amount *big.Int, nonce uint64, tssReqChan chan *TssReq, tssRespChan chan map[string][]byte) (string, error) {
 	pi.logger.Info().Msgf(">>>>from addr %v to addr %v with amount %v of %v\n", fromAddr, toAddr, sdk.NewDecFromBigIntWithPrec(amount, 18), tokenAddr)
 	var txHash common.Hash
 	var err error

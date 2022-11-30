@@ -29,6 +29,9 @@ type OutBoundReq struct {
 	Fee                types.Coins    `json:"fee"`
 	FeeToValidator     types.Coins    `json:"fee_to_validator"`
 	ChainType          string         `json:"chain_type"`
+	CosAccSeq          uint64         `json:"cos_acc_seq"` // this item is used for
+	CosAccNum          uint64         `json:"cos_acc_num"` // this item is used for
+	IbcReceiver        string         `json:"ibc_receiver"`
 }
 
 // InBoundReq is the account that top up account info to oppy pub_chain
@@ -42,6 +45,8 @@ type InBoundReq struct {
 	AccSeq         uint64           `json:"acc_seq"`
 	PoolCosAddress types.AccAddress `json:"pool_oppy_address"`
 	PoolPk         string           `json:"pool_pk"`
+	ChainType      string           `json:"chain_type"`
+	ibcReceiver    string           `json:"ibc_receiver"`
 }
 
 type BridgeMemo struct {

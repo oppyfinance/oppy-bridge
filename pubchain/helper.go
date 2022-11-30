@@ -327,6 +327,8 @@ func (pi *Instance) GetChainClient(chainType string) *ChainInfo {
 		chainInfo = pi.EthChain
 	case "BSC":
 		chainInfo = pi.BSCChain
+	case "JOLT":
+		chainInfo = nil
 	default:
 		zlog.Error().Msgf("invalid chain type")
 		return nil

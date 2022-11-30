@@ -24,7 +24,7 @@ func (oc *OppyChainInstance) SubmitOutboundTx(conn grpc1.ClientConn, operator ke
 			return err
 		}
 	}
-	acc, err := queryAccount(conn, operator.GetAddress().String(), "")
+	acc, err := QueryAccount(conn, operator.GetAddress().String(), "")
 	if err != nil {
 		oc.logger.Error().Err(err).Msgf("fail to query the account")
 		return err

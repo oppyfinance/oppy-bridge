@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	BSC = "BSC"
-	ETH = "ETH"
+	BSC  = "BSC"
+	ETH  = "ETH"
+	JOLT = "JOLT"
 )
 
 func (oc *OppyChainInstance) calculateGas(chainType string) (types.Coin, error) {
@@ -89,7 +90,7 @@ func (oc *OppyChainInstance) processTopUpRequest(msg *banktypes.MsgSend, txBlock
 	amount = amount.Mul(types.MustNewDecFromStr(config.FeeToValidatorGAP))
 	feeToValidator := savedTx.Fee.Sub(types.NewCoin(savedTx.FeeWanted.Denom, amount.TruncateInt()))
 
-	itemReq := bcommon.NewOutboundReq(memo.TopupID, savedTx.OutReceiverAddress, currEthAddr, savedTx.Token, savedTx.TokenAddr, txBlockHeight, types.Coins{savedTx.Fee}, types.Coins{feeToValidator}, savedTx.ChainType)
+	itemReq := bcommon.NewOutboundReq(memo.TopupID, savedTx.OutReceiverAddress, currEthAddr, savedTx.Token, savedTx.TokenAddr, txBlockHeight, types.Coins{savedTx.Fee}, types.Coins{feeToValidator}, savedTx.ChainType, memo.Dest)
 	oc.AddItem(&itemReq)
 	oc.logger.Info().Msgf("Outbound Transaction in Block %v (Current Block %v) with fee %v paid to validators", txBlockHeight, oc.CurrentHeight, feeToValidator.String())
 	return nil
@@ -129,7 +130,7 @@ func (oc *OppyChainInstance) processNativeRequest(msg *banktypes.MsgSend, txID s
 		amount := item.FeeWanted.Amount.ToDec()
 		amount = amount.Mul(types.MustNewDecFromStr(config.FeeToValidatorGAP))
 		feeToValidator := item.Fee.Sub(types.NewCoin(item.FeeWanted.Denom, amount.TruncateInt()))
-		itemReq := bcommon.NewOutboundReq(txID, item.OutReceiverAddress, currEthAddr, item.Token, tokenAddr, txBlockHeight, types.Coins{item.FeeWanted}, types.Coins{feeToValidator}, memo.ChainType)
+		itemReq := bcommon.NewOutboundReq(txID, item.OutReceiverAddress, currEthAddr, item.Token, tokenAddr, txBlockHeight, types.Coins{item.FeeWanted}, types.Coins{feeToValidator}, memo.ChainType, memo.Dest)
 		oc.AddItem(&itemReq)
 		oc.logger.Info().Msgf("Outbount Transaction in Block %v (Current Block %v), with fee %v paid to validators", txBlockHeight, oc.CurrentHeight, feeToValidator.String())
 		return nil
@@ -188,7 +189,7 @@ func (oc *OppyChainInstance) processErc20Request(msg *banktypes.MsgSend, txID st
 		amount = amount.Mul(types.MustNewDecFromStr(config.FeeToValidatorGAP))
 		feeToValidator := item.Fee.Sub(types.NewCoin(item.FeeWanted.Denom, amount.TruncateInt()))
 
-		itemReq := bcommon.NewOutboundReq(txID, item.OutReceiverAddress, currEthAddr, item.Token, tokenAddr, txBlockHeight, types.Coins{item.Fee}, types.Coins{feeToValidator}, memo.ChainType)
+		itemReq := bcommon.NewOutboundReq(txID, item.OutReceiverAddress, currEthAddr, item.Token, tokenAddr, txBlockHeight, types.Coins{item.Fee}, types.Coins{feeToValidator}, memo.ChainType, memo.Dest)
 		oc.AddItem(&itemReq)
 		oc.logger.Info().Msgf("Outbound Transaction in Block %v (Current Block %v) with fee %v paid to validators", txBlockHeight, oc.CurrentHeight, types.Coins{feeToValidator})
 		return nil
@@ -197,7 +198,7 @@ func (oc *OppyChainInstance) processErc20Request(msg *banktypes.MsgSend, txID st
 }
 
 // processMsg handle the oppychain transactions
-func (oc *OppyChainInstance) processMsg(txBlockHeight int64, address []types.AccAddress, curEthAddr ethcommon.Address, memo bcommon.BridgeMemo, msg *banktypes.MsgSend, txHash []byte) error {
+func (oc *OppyChainInstance) processMsg(txBlockHeight int64, curEthAddr ethcommon.Address, memo bcommon.BridgeMemo, msg *banktypes.MsgSend, txHash []byte) error {
 	txID := strings.ToLower(hex.EncodeToString(txHash))
 
 	toAddress, err := types.AccAddressFromBech32(msg.ToAddress)
@@ -207,7 +208,7 @@ func (oc *OppyChainInstance) processMsg(txBlockHeight int64, address []types.Acc
 	}
 
 	// we check whether it is the message to the pool
-	if !(toAddress.Equals(address[0]) || toAddress.Equals(address[1])) {
+	if !toAddress.Equals(oc.VaultModuleAddress) {
 		oc.logger.Warn().Msg("not a top up message to the pool")
 		return errors.New("not a top up message to the pool")
 	}
@@ -355,7 +356,7 @@ func (oc *OppyChainInstance) UpdatePool(pool *vaulttypes.PoolInfo) *bcommon.Pool
 
 func (oc *OppyChainInstance) DoMoveFunds(conn grpc1.ClientConn, fromPool *bcommon.PoolInfo, to types.AccAddress, height int64) (bool, error) {
 	from := fromPool.CosAddress
-	acc, err := queryAccount(conn, from.String(), "")
+	acc, err := QueryAccount(conn, from.String(), "")
 	if err != nil {
 		oc.logger.Error().Err(err).Msg("Fail to query the pool account")
 		return false, err

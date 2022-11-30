@@ -11,14 +11,19 @@ import (
 	vaulttypes "gitlab.com/oppy-finance/oppychain/x/vault/types"
 )
 
-func prepareIssueTokenRequest(item *common.InBoundReq, creatorAddr, index string) (*vaulttypes.MsgCreateIssueToken, error) {
-	userAddr, _, coin, _ := item.GetInboundReqInfo()
-
-	a, err := vaulttypes.NewMsgCreateIssueToken(creatorAddr, index, coin.String(), userAddr.String())
-	if err != nil {
-		return nil, err
+func prepareIssueTokenRequest(item *common.InBoundReq, creatorAddr, index string) (*vaulttypes.MsgCreateIssueToken, bool, error) {
+	userAddr, _, coin, _, chainType, _ := item.GetInboundReqInfo()
+	receiver := userAddr.String()
+	isIBC := false
+	if chainType == JOLT {
+		receiver = creatorAddr
+		isIBC = true
 	}
-	return a, nil
+	a, err := vaulttypes.NewMsgCreateIssueToken(creatorAddr, index, coin.String(), receiver)
+	if err != nil {
+		return nil, isIBC, err
+	}
+	return a, isIBC, nil
 }
 
 // DoProcessInBound mint the token in oppy chain
@@ -36,7 +41,7 @@ func (oc *OppyChainInstance) DoProcessInBound(conn grpc1.ClientConn, items []*co
 		index := item.Hash().Hex()
 		_, _, poolAddress, poolPk := item.GetAccountInfo()
 		oc.logger.Info().Msgf("we are about to prepare the tx with other nodes with index %v", index)
-		issueReq, err := prepareIssueTokenRequest(item, poolAddress.String(), index)
+		issueReq, _, err := prepareIssueTokenRequest(item, poolAddress.String(), index)
 		if err != nil {
 			oc.logger.Error().Err(err).Msg("fail to prepare the issuing of the token")
 			continue
@@ -56,7 +61,7 @@ func (oc *OppyChainInstance) DoProcessInBound(conn grpc1.ClientConn, items []*co
 	// as in a group, the accseq MUST has been sorted.
 	accSeq, accNum, poolAddress, _ := items[0].GetAccountInfo()
 	// for batchsigning, the signMsgs for all the members in the grop is the same
-	txHashes, err := oc.batchComposeAndSend(conn, issueReqs, accSeq, accNum, signMsgs[0], poolAddress)
+	txHashes, err := oc.BatchComposeAndSend(conn, issueReqs, accSeq, accNum, signMsgs[0], poolAddress)
 	if err != nil {
 		oc.logger.Error().Msgf("we fail to process one or more txs")
 	}
