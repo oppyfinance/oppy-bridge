@@ -31,6 +31,7 @@ func MakeEncodingConfig() params.EncodingConfig {
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ibctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ibctransfer.RegisterInterfaces(encodingConfig.InterfaceRegistry)
+	ibctransfer.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	app.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	simapp.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
