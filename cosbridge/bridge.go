@@ -547,6 +547,13 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 			fmt.Printf(">>>>>>>>>%v\n", t.GetTxResponse().Events)
 
 		default:
+			t, err := GetTx(rawTx.Hash(), conn)
+			if err != nil {
+				oc.logger.Error().Err(err).Msgf("fail to query the tx")
+				continue
+			}
+			fmt.Printf(">>>>>>>>>%v\n", t.GetTxResponse().Events)
+
 			continue
 		}
 	}
