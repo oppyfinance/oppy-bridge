@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
-
 	"strconv"
+
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32/legacybech32" //nolint
 	cosTx "github.com/cosmos/cosmos-sdk/types/tx"
@@ -492,6 +492,14 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 	if pools[0] == nil || pools[1] == nil {
 		return
 	}
+	t, err := GetTx(rawTx.Hash(), conn)
+	fmt.Printf("####%v\n", t.GetTx().GetBody().String())
+	for _, el := range t.GetTx().GetMsgs() {
+		if el != nil {
+			fmt.Printf(">>>>>>>>%v\n", el.String())
+		}
+	}
+
 	encodingConfig := oc.encoding
 
 	tx, err := encodingConfig.TxConfig.TxDecoder()(rawTx)
@@ -525,6 +533,7 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 				oc.logger.Error().Err(err).Msgf("fail to query the tx")
 				continue
 			}
+			t.GetTx().GetMsgs()
 			if t.TxResponse.Code != 0 {
 				//		this means this tx is not a successful tx
 				zlog.Warn().Msgf("not a valid top up message with error code %v (%v)", t.TxResponse.Code, t.TxResponse.RawLog)
