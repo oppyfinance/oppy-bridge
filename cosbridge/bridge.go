@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	ibctransfer "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
+	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
+
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32/legacybech32" //nolint
@@ -536,7 +537,8 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 					oc.logger.Error().Err(err).Msgf("fail to process the message, it is not a top up message")
 				}
 			}
-		case *ibctransfer.MsgTransfer:
+
+		case *channeltypes.MsgRecvPacket:
 			t, err := GetTx(rawTx.Hash(), conn)
 			if err != nil {
 				oc.logger.Error().Err(err).Msgf("fail to query the tx")
