@@ -493,7 +493,11 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 		return
 	}
 	t, err := GetTx(rawTx.Hash(), conn)
-	fmt.Printf("####%v\n", t.GetTx().GetBody().String())
+
+	for _, el := range t.GetTxResponse().Events {
+		fmt.Printf("!!!!!!!%v\n", el.String())
+	}
+
 	for _, el := range t.GetTx().GetMsgs() {
 		if el != nil {
 			fmt.Printf(">>>>>>>>%v\n", el.String())
