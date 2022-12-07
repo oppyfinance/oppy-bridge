@@ -493,9 +493,22 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 		return
 	}
 	t, err := GetTx(rawTx.Hash(), conn)
+	if err != nil {
+		oc.logger.Error().Err(err).Msgf("fail to query the transaction")
+		return
+	}
+
+	if t.GetTxResponse().Code != 0 {
+		oc.logger.Error().Msgf("unsuccessful tx, skipped")
+		return
+	}
 
 	for _, el := range t.GetTxResponse().Events {
 		fmt.Printf("!!!!!!!%v\n", el.String())
+		msgs := t.GetTx().GetMsgs()
+		for _, el2 := range msgs {
+			fmt.Printf(">>>>>%v", el2.String())
+		}
 	}
 
 	for _, el := range t.GetTx().GetMsgs() {
