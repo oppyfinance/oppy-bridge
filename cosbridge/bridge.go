@@ -505,10 +505,8 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 
 	for _, el := range t.GetTxResponse().Events {
 		fmt.Printf("!!!!!!!%v\n", el.String())
-		msgs := t.GetTx().GetMsgs()
-		for _, el2 := range msgs {
-			fmt.Printf(">>>>>%v", el2.String())
-		}
+		msgs := t.GetTxResponse().Logs.String()
+		fmt.Printf(">>>>%v\n", msgs)
 	}
 
 	for _, el := range t.GetTx().GetMsgs() {
