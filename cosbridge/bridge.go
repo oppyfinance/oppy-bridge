@@ -509,12 +509,13 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 
 		tx2, err := encodingConfig.TxConfig.TxDecoder()(rawTx)
 		if err != nil {
-			oc.logger.Info().Msgf("fail to decode the data and skip this tx")
+			oc.logger.Info().Msgf("fail to decode the data and skip this tx %v", err)
 			return
 		}
 		fmt.Printf(">2222>>>>.%v\n", tx2.GetMsgs())
 	}
 
+	return
 	for _, el := range t.GetTx().GetMsgs() {
 		if el != nil {
 			fmt.Printf(">>>>>>>>%v\n", el.String())
