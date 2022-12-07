@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strconv"
 
-	channeltypes "github.com/cosmos/ibc-go/v2/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32/legacybech32" //nolint
 	cosTx "github.com/cosmos/cosmos-sdk/types/tx"

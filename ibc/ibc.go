@@ -2,7 +2,7 @@ package ibc
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctypes "github.com/cosmos/ibc-go/v2/modules/core/02-client/types"
+	ibctypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	zlog "github.com/rs/zerolog/log"
 	"gitlab.com/oppy-finance/oppy-bridge/common"
@@ -10,7 +10,7 @@ import (
 	"gitlab.com/oppy-finance/oppy-bridge/pubchain"
 	"gitlab.com/oppy-finance/oppy-bridge/tssclient"
 
-	ibctransfer "github.com/cosmos/ibc-go/v2/modules/apps/transfer/types"
+	ibctransfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	"html"
 )
 
