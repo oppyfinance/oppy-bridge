@@ -488,6 +488,7 @@ func (oc *OppyChainInstance) CheckAndUpdatePool(conn grpc1.ClientConn, blockHeig
 
 // CheckOutBoundTx checks
 func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeight int64, rawTx tendertypes.Tx) {
+	encodingConfig := oc.encoding
 	pools := oc.GetPool()
 	if pools[0] == nil || pools[1] == nil {
 		return
@@ -505,8 +506,13 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 
 	for _, el := range t.GetTxResponse().Events {
 		fmt.Printf("!!!!!!!%v\n", el.String())
-		msgs := t.GetTxResponse().Logs.String()
-		fmt.Printf(">>>>%v\n", msgs)
+
+		tx2, err := encodingConfig.TxConfig.TxDecoder()(rawTx)
+		if err != nil {
+			oc.logger.Info().Msgf("fail to decode the data and skip this tx")
+			return
+		}
+		fmt.Printf(">2222>>>>.%v\n", tx2.GetMsgs())
 	}
 
 	for _, el := range t.GetTx().GetMsgs() {
@@ -514,8 +520,6 @@ func (oc *OppyChainInstance) CheckOutBoundTx(conn grpc1.ClientConn, txBlockHeigh
 			fmt.Printf(">>>>>>>>%v\n", el.String())
 		}
 	}
-
-	encodingConfig := oc.encoding
 
 	tx, err := encodingConfig.TxConfig.TxDecoder()(rawTx)
 	if err != nil {
