@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	ibctransfer "github.com/cosmos/ibc-go/v3/modules/apps/transfer/types"
 	ibctypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
+	txtypes "github.com/cosmos/ibc-go/v3/modules/core/04-channel/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v3/modules/light-clients/07-tendermint/types"
 	"gitlab.com/oppy-finance/oppychain/app"
 )
@@ -33,7 +34,7 @@ func MakeEncodingConfig() params.EncodingConfig {
 	ibctypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ibctransfer.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ibctmtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
-
+	txtypes.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	app.ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	simapp.ModuleBasics.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	return encodingConfig
